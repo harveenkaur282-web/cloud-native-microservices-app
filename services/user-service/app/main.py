@@ -1,1 +1,30 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+app = FastAPI(
+    title="Mini E-commerce User Service",
+    version="0.1.0"
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+    "http://localhost:4000",
+    "http://127.0.0.1:4000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def root():
+    return {
+    "message": "THIS IS THE NEW CODE"
+    }
+
+@app.get("/api/v1/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "version": "0.1.0"
+    }
+
 
