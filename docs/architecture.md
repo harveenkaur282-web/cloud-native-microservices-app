@@ -12,3 +12,6 @@ user --> frontend service --> http/https requests --> api gateway -->
 user service, product service and order service having their own databases 
 
 I built a cloud-native e-commerce platform using microservices. I containerized each service, orchestrated them with Kubernetes, automated deployments with CI/CD, and deployed the application to AWS.
+
+## 3. USER SERVICE
+![alt text](image.png)
