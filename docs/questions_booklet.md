@@ -24,5 +24,12 @@ database.py - configure and provide database access
 ## why ph no. unique?
 for now- I assumed one account corresponds to one phone number for authentication and communication. In another business domain, such as a family account system, this constraint might be relaxed.
 
+## why it's called models.py?
+domain modeling, business entities, it models what data exists, the constraints, relationships and how it maps the entities to the database table through the ORM. 
+
+## VERY IMP POINT- main.py
+SQLAlchemy stores metadata for every model that inherits from Base. When Base.metadata.create_all() is called, it iterates over all registered models and creates the corresponding database tables. That's why we don't need to manually create each table.
+
+
 
 

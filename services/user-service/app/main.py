@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.database import Base, engine
+from app import models
+
+Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Mini E-commerce User Service",
     version="0.1.0"
