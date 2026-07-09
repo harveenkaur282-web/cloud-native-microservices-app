@@ -30,6 +30,17 @@ domain modeling, business entities, it models what data exists, the constraints,
 ## VERY IMP POINT- main.py
 SQLAlchemy stores metadata for every model that inherits from Base. When Base.metadata.create_all() is called, it iterates over all registered models and creates the corresponding database tables. That's why we don't need to manually create each table.
 
+## imp
+id                 → generated
+username           → received
+full_name          → received
+email              → received
+phone_number       → received
+address            → received
+password_hash      → generated
+created_at         → generated
+updated_at         → generated
+is_active          → default
 
 
 
