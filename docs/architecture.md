@@ -15,3 +15,5 @@ I built a cloud-native e-commerce platform using microservices. I containerized 
 
 ## 3. USER SERVICE
 ![alt text](image.png)
+
+user entity- ![alt text](image-1.png)
