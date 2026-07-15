@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas import UserCreate
 from app.database import get_db
 from app.models import User
-
-
+from app.security import get_password_hash
 router = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"]
@@ -17,6 +16,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     username= user.username,
     full_name=user.full_name,
     email=user.email,
+    password_hash =get_password_hash(user.password),
     phone_number=user.phone_number,
     address=user.address
 )
