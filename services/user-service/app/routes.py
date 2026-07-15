@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas import UserCreate, LoginRequest
 from app.database import get_db
 from app.models import User
-from app.security import get_password_hash, verify_password
+from app.security import get_password_hash, verify_password, create_access_token
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 router = APIRouter(
@@ -42,16 +42,21 @@ def login_user(login_request: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == login_request.username).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_NOT_FOUND,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
         )
     if not verify_password(login_request.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+            
             detail="Incorrect username or password"
         )
+    access_token = create_access_token(data={"sub": user.username})
+    token_type = "bearer"
     return {
         "message": "Login successful",
         "username": user.username,
+        "access_token": access_token,
+        "token_type": token_type,
         "email": user.email
     }
