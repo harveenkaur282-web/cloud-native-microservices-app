@@ -4,6 +4,8 @@ from app.schemas import UserCreate
 from app.database import get_db
 from app.models import User
 from app.security import get_password_hash
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
 router = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"]
@@ -21,9 +23,16 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     address=user.address
 )
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {
-        "username": new_user.username,
-        "email": new_user.email
-    }
+    try:
+        db.commit()
+        db.refresh(new_user)
+        return {
+            "username": new_user.username,
+            "email": new_user.email
+        }
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username or email already exists"
+        )
