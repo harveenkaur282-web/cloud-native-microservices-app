@@ -1,1 +1,39 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.database import Base, engine
+from app import models, routes
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Mini E-commerce Product Service",
+    version="0.1.0"
+)
+
+app.include_router(routes.router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:4000",
+        "http://127.0.0.1:4000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def root():
+    return {"message": "Product service is running"}
+
+
+@app.get("/api/v1/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "version": "0.1.0"
+    }
 
