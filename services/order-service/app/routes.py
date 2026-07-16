@@ -1,11 +1,13 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Order, OrderItem
 from app.schemas import OrderCreate, OrderResponse
+
 from app.services.product_client import get_product
+from app.services.inventory_client import reserve_stock
+
 
 router = APIRouter(
     prefix="/api/v1/orders",
@@ -13,69 +15,110 @@ router = APIRouter(
 )
 
 
-
 @router.post(
     "/",
     response_model=OrderResponse
 )
 def create_order(
-    order:OrderCreate,
-    db:Session=Depends(get_db)
+    order: OrderCreate,
+    db: Session = Depends(get_db)
 ):
 
-
     total = 0
+    order_items = []
 
 
-    order_items=[]
+    try:
 
+        for item in order.items:
 
-    for item in order.items:
-
-        product = get_product(item.product_id)
-
-
-        if not product:
-            raise HTTPException(
-            status_code=404,
-            detail=f"Product {item.product_id} not found"
+            # 1. Get product details
+            product = get_product(
+                item.product_id
             )
 
 
-        price = product["price"]
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Product {item.product_id} not found"
+                )
 
 
-        total += float(price) * item.quantity
+            price = float(product["price"])
 
 
-        order_items.append(
-            OrderItem(
-                product_id=item.product_id,
-                quantity=item.quantity,
-                price_at_purchase=price
+            # 2. Reserve inventory
+            try:
+
+                reserve_stock(
+                    product_id=item.product_id,
+                    quantity=item.quantity
+                )
+
+
+            except Exception as exc:
+
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Inventory error: {str(exc)}"
+                )
+
+
+            # 3. Calculate total
+
+            total += price * item.quantity
+
+
+            # 4. Create order item
+
+            order_items.append(
+                OrderItem(
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                    price_at_purchase=price
+                )
             )
+
+
+        # 5. Create order
+
+        new_order = Order(
+
+            user_id=order.user_id,
+
+            total_amount=total,
+
+            items=order_items
+
         )
 
 
-    new_order = Order(
+        db.add(new_order)
 
-        user_id=order.user_id,
+        db.commit()
 
-        total_amount=total,
-
-        items=order_items
-    )
+        db.refresh(new_order)
 
 
-    db.add(new_order)
-
-    db.commit()
-
-    db.refresh(new_order)
+        return new_order
 
 
-    return new_order
 
+    except HTTPException:
+
+        db.rollback()
+        raise
+
+
+    except Exception as exc:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not create order: {str(exc)}"
+        )
 
 
 
@@ -84,7 +127,7 @@ def create_order(
     response_model=list[OrderResponse]
 )
 def get_orders(
-    db:Session=Depends(get_db)
+    db: Session = Depends(get_db)
 ):
 
     return db.query(Order).all()
@@ -96,13 +139,15 @@ def get_orders(
     response_model=OrderResponse
 )
 def get_order(
-    order_id:int,
-    db:Session=Depends(get_db)
+    order_id: int,
+    db: Session = Depends(get_db)
 ):
 
-    order = db.query(Order)\
-        .filter(Order.id==order_id)\
+    order = (
+        db.query(Order)
+        .filter(Order.id == order_id)
         .first()
+    )
 
 
     if not order:
