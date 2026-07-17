@@ -10,11 +10,12 @@ class ProductCreate(BaseModel):
     name: str = Field(..., min_length=1)
     description: str | None = None
     price: Decimal
-    quantity: int = Field(default=0)
     category: str = Field(..., min_length=1)
     product_metadata: dict | None = None
     image_url: str | None = None
-    
+    # Initial stock quantity — forwarded to Inventory Service on product creation.
+    # Not stored in the Product model.
+    initial_quantity: int = Field(default=0, ge=0)
 
     @field_validator("name", "category")
     @classmethod
@@ -39,19 +40,11 @@ class ProductCreate(BaseModel):
             raise ValueError("Price must be greater than zero")
         return value
 
-    @field_validator("quantity")
-    @classmethod
-    def validate_quantity(cls, value: int) -> int:
-        if value < 0:
-            raise ValueError("Quantity must not be negative")
-        return value
-
 
 class ProductUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     price: Decimal | None = None
-    quantity: int | None = None
     category: str | None = None
     status: ProductStatus | None = None
     product_metadata: dict | None = None
@@ -84,22 +77,12 @@ class ProductUpdate(BaseModel):
             raise ValueError("Price must be greater than zero")
         return value
 
-    @field_validator("quantity")
-    @classmethod
-    def validate_optional_quantity(cls, value: int | None) -> int | None:
-        if value is None:
-            return None
-        if value < 0:
-            raise ValueError("Quantity must not be negative")
-        return value
-
 
 class ProductResponse(BaseModel):
     id: int
     name: str
     description: str | None
     price: Decimal
-    quantity: int
     category: str
     status: ProductStatus
     created_at: datetime

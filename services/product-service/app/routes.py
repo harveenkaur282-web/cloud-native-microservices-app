@@ -4,6 +4,7 @@ from app.schemas import ProductCreate, ProductUpdate, ProductResponse
 
 from app.models import Product, ProductStatus
 from app.database import get_db
+from app.inventory_client import create_inventory_record
 
 router = APIRouter(
     prefix="/api/v1/products",
@@ -17,15 +18,26 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
         name=product.name,
         description=product.description,
         price=product.price,
-        quantity=product.quantity,
         category=product.category,
         image_url=product.image_url,
-        status=ProductStatus.DRAFT.value,
+        status=ProductStatus.DRAFT,
         product_metadata=product.product_metadata
     )
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+
+    # Trigger inventory record creation in the Inventory Service.
+    # This is a synchronous REST call for now.
+    # Future improvement: replace with a ProductCreated event via message broker.
+    inventory_result = create_inventory_record(
+        product_id=new_product.id,
+        available_quantity=product.initial_quantity
+    )
+
+    if inventory_result is None:
+        print("Inventory record could not be created.")
+
     return new_product
 
 

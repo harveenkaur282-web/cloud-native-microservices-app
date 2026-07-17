@@ -1,0 +1,30 @@
+-- ============================================================
+-- Migration: Remove quantity column from products table
+-- Service:   Product Service (cloudcart_products database)
+-- Date:      2026-07-17
+-- Purpose:   Transfer stock ownership to Inventory Service
+-- ============================================================
+--
+-- IMPORTANT: Run this AFTER verifying that all existing product
+-- quantities have been migrated to the Inventory Service.
+--
+-- Pre-migration checklist:
+--   1. Ensure the Inventory Service has a record for every product.
+--   2. Verify available_quantity values match existing product quantities.
+--   3. Take a database backup before running this migration.
+--
+-- To migrate existing quantity data to inventory records, run this
+-- against the cloudcart_inventory database FIRST:
+--
+--   INSERT INTO inventory (product_id, available_quantity, reserved_quantity, created_at, updated_at)
+--   SELECT id, quantity, 0, NOW(), NOW()
+--   FROM dblink(
+--       'dbname=cloudcart_products',
+--       'SELECT id, quantity FROM products'
+--   ) AS products(id int, quantity int)
+--   ON CONFLICT (product_id) DO NOTHING;
+--
+-- Then run this migration against the cloudcart_products database:
+-- ============================================================
+
+ALTER TABLE products DROP COLUMN IF EXISTS quantity;
