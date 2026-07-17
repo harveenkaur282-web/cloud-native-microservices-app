@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.schemas import ProductCreate, ProductUpdate, ProductResponse
 
@@ -19,6 +19,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
         price=product.price,
         quantity=product.quantity,
         category=product.category,
+        image_url=product.image_url,
         status=ProductStatus.DRAFT.value,
         product_metadata=product.product_metadata
     )
@@ -29,12 +30,23 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[ProductResponse])
-def list_products(db: Session = Depends(get_db)):
-    products = (
-    db.query(Product)
-    .filter(Product.status != ProductStatus.ARCHIVED)
-    .all()
-    )
+def list_products(
+    category: str | None = Query(None, description="Filter products by category"),
+    search: str | None = Query(None, description="Search products by name (case-insensitive)"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product).filter(Product.status != ProductStatus.ARCHIVED)
+
+    if category:
+        query = query.filter(Product.category == category)
+
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
+
+    offset = (page - 1) * limit
+    products = query.offset(offset).limit(limit).all()
     return products
 
 

@@ -13,6 +13,8 @@ class ProductCreate(BaseModel):
     quantity: int = Field(default=0)
     category: str = Field(..., min_length=1)
     product_metadata: dict | None = None
+    image_url: str | None = None
+    
 
     @field_validator("name", "category")
     @classmethod
@@ -53,6 +55,7 @@ class ProductUpdate(BaseModel):
     category: str | None = None
     status: ProductStatus | None = None
     product_metadata: dict | None = None
+    image_url: str | None = None
 
     @field_validator("name", "category")
     @classmethod
@@ -102,5 +105,6 @@ class ProductResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     product_metadata: dict | None
+    image_url: str | None
 
     model_config = ConfigDict(from_attributes=True)

@@ -40,6 +40,11 @@ class Product(Base):
         nullable=False
     )
 
+    image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True
+    )
+
     quantity: Mapped[int] = mapped_column(
         Integer,
         default=0,
