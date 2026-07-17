@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -21,8 +21,22 @@ router = APIRouter(
 )
 def create_order(
     order: OrderCreate,
+    x_user_id: int | None = Header(None, alias="X-User-ID"),
     db: Session = Depends(get_db)
 ):
+
+    # 1. Resolve user ID from X-User-ID header or fallback to request body user_id
+    user_id = x_user_id
+    if user_id is None:
+        # DEVELOPMENT FALLBACK ONLY: This allows testing via Swagger UI.
+        # It must be removed before production deployment to prevent identity spoofing.
+        user_id = order.user_id
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="User identity is missing. Provide X-User-ID header."
+        )
 
     total = 0
     order_items = []
@@ -85,7 +99,7 @@ def create_order(
 
         new_order = Order(
 
-            user_id=order.user_id,
+            user_id=user_id,
 
             total_amount=total,
 

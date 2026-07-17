@@ -13,8 +13,10 @@ class OrderItemCreate(BaseModel):
 
 class OrderCreate(BaseModel):
 
-    user_id:int
-    items:list[OrderItemCreate]
+    # DEVELOPMENT FALLBACK ONLY: This field is only for local Swagger testing
+    # and must be removed before production deployment in favor of the X-User-ID header.
+    user_id: int | None = None
+    items: list[OrderItemCreate]
 
 
 
