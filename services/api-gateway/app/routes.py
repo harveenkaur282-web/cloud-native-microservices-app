@@ -34,6 +34,7 @@ SERVICE_MAP = {
         "GET",
         "POST",
         "PUT",
+        "PATCH",
         "DELETE"
     ]
 )
