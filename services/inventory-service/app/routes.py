@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Inventory
-from app.schemas import InventoryCreate, InventoryResponse
+from app.schemas import InventoryCreate, InventoryResponse, InventoryRelease
 
 
 router = APIRouter(
@@ -156,3 +156,40 @@ def release_stock(
         "available_stock": inventory.available_quantity,
         "reserved_stock": inventory.reserved_quantity
     }
+
+
+@router.post(
+    "/release",
+    response_model=InventoryResponse
+)
+def release_stock_post(
+    release_data: InventoryRelease,
+    db: Session = Depends(get_db)
+):
+    """
+    Release previously reserved stock back to available inventory via POST body.
+    """
+    inventory = db.query(Inventory)\
+        .filter(
+            Inventory.product_id == release_data.product_id
+        ).first()
+
+    if not inventory:
+        raise HTTPException(
+            status_code=404,
+            detail="Inventory not found"
+        )
+
+    if inventory.reserved_quantity < release_data.quantity:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot release more than reserved quantity"
+        )
+
+    inventory.reserved_quantity -= release_data.quantity
+    inventory.available_quantity += release_data.quantity
+
+    db.commit()
+    db.refresh(inventory)
+
+    return inventory
