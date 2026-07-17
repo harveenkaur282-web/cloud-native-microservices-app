@@ -1,15 +1,46 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from app.schemas import UserCreate, LoginRequest
+from app.schemas import UserCreate, LoginRequest, UserResponse, UserUpdate
 from app.database import get_db
 from app.models import User
-from app.security import get_password_hash, verify_password, create_access_token
+from app.security import get_password_hash, verify_password, create_access_token, verify_access_token
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
 router = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"]
 )
+
+
+security_scheme = HTTPBearer(auto_error=False)
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    if not credentials:
+        raise credentials_exception
+        
+    try:
+        token = credentials.credentials
+        payload = verify_access_token(token)
+        username = payload.get("sub")
+        if not username:
+            raise credentials_exception
+    except Exception:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise credentials_exception
+        
+    return user
 
 
 @router.post("/register")
@@ -60,3 +91,40 @@ def login_user(login_request: LoginRequest, db: Session = Depends(get_db)):
         "token_type": token_type,
         "email": user.email
     }
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.put("/me", response_model=UserResponse)
+def update_current_user_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    if "phone_number" in update_data and update_data["phone_number"] != current_user.phone_number:
+        existing_phone = db.query(User).filter(User.phone_number == update_data["phone_number"]).first()
+        if existing_phone:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Phone number already in use"
+            )
+
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+
+    try:
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Conflict updating user profile details"
+        )
+
