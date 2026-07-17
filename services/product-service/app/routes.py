@@ -52,7 +52,7 @@ def list_products(
     query = db.query(Product).filter(Product.status != ProductStatus.ARCHIVED)
 
     if category:
-        query = query.filter(Product.category == category)
+        query = query.filter(Product.category.ilike(category))
 
     if search:
         query = query.filter(Product.name.ilike(f"%{search}%"))

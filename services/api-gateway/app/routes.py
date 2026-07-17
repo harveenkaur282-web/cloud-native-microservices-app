@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
 import httpx
 import os
 
@@ -45,29 +45,31 @@ async def gateway(
 
     if service not in SERVICE_MAP:
 
-        return {
-            "error": "Service not found"
-        }
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Service not found"}
+        )
 
 
-    url = (
-        f"{SERVICE_MAP[service]}"
-        f"/api/v1/{service}/{path}"
-    )
+    # Build downstream URL while preserving query parameters
+    url = f"{SERVICE_MAP[service]}/api/v1/{service}/{path}"
+    if request.url.query:
+        url = f"{url}?{request.url.query}"
 
 
-    async with httpx.AsyncClient() as client:
-
-        response = await client.request(
-
-            method=request.method,
-
-            url=url,
-
-            headers=dict(request.headers),
-
-            content=await request.body()
-
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                method=request.method,
+                url=url,
+                headers=dict(request.headers),
+                content=await request.body(),
+                timeout=5.0
+            )
+    except httpx.HTTPError:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Service unavailable"}
         )
 
 
