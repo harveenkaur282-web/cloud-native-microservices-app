@@ -1,57 +1,87 @@
-version: "3.9"
+version: '3.8'
 
 services:
-
-  user-service:
+  frontend:
     build:
-      context: ./services/user-service
-    container_name: user-service
-    env_file:
-      - ./services/user-service/.env
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:8000
     ports:
-      - "8001:8001"
-
-
-  product-service:
-    build:
-      context: ./services/product-service
-    container_name: product-service
-    env_file:
-      - ./services/product-service/.env
-    ports:
-      - "8002:8002"
-
-
-  order-service:
-    build:
-      context: ./services/order-service
-    container_name: order-service
-    env_file:
-      - ./services/order-service/.env
-    ports:
-      - "8003:8003"
-
-
-  inventory-service:
-    build:
-      context: ./services/inventory-service
-    container_name: inventory-service
-    env_file:
-      - ./services/inventory-service/.env
-    ports:
-      - "8004:8004"
-
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api-gateway
 
   api-gateway:
     build:
       context: ./services/api-gateway
-    container_name: api-gateway
-    env_file:
-      - ./services/api-gateway/.env
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      - USER_SERVICE_URL=http://user-service:8001
+      - PRODUCT_SERVICE_URL=http://product-service:8002
+      - ORDER_SERVICE_URL=http://order-service:8003
+      - INVENTORY_SERVICE_URL=http://inventory-service:8004
     depends_on:
       - user-service
       - product-service
       - order-service
       - inventory-service
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_users
+      - SECRET_KEY=828c931f15d56b852f64fdc26c71596b277322eec827de93efb96d443e29d50e
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_products
+      - INVENTORY_SERVICE_URL=http://inventory-service:8004
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - inventory-service
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_orders
+      - PRODUCT_SERVICE_URL=http://product-service:8002
+      - INVENTORY_SERVICE_URL=http://inventory-service:8004
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - product-service
+      - inventory-service
+
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_inventory
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
