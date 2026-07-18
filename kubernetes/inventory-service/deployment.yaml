@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: cloudcart
+  labels:
+    app: inventory-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+      - name: inventory-service
+        image: harveen421/cloudcart-inventory-service:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8004
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: cloudcart-secrets
+              key: INVENTORY_DATABASE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: cloudcart
+spec:
+  selector:
+    app: inventory-service
+  ports:
+  - port: 8004
+    targetPort: 8004
+  type: ClusterIP

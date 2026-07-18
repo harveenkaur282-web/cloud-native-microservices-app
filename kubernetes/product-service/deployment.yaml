@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: cloudcart
+  labels:
+    app: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+      - name: product-service
+        image: harveen421/cloudcart-product-service:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8002
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: cloudcart-secrets
+              key: PRODUCT_DATABASE_URL
+        - name: INVENTORY_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cloudcart-config
+              key: INVENTORY_SERVICE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: cloudcart
+spec:
+  selector:
+    app: product-service
+  ports:
+  - port: 8002
+    targetPort: 8002
+  type: ClusterIP

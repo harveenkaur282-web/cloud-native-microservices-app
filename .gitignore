@@ -12,3 +12,6 @@ user-venv/
 
 # VS Code
 .vscode/
+
+# Kubernetes Secrets
+kubernetes/config/secret.yaml
