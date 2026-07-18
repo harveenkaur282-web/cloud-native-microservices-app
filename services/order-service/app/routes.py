@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Order, OrderItem, OrderStatus
-from app.schemas import OrderCreate, OrderResponse, OrderStatusUpdate
+from app.schemas import OrderCreate, OrderResponse, OrderStatusUpdate, OrderPaymentRequest
+
 
 from app.services.product_client import get_product
 from app.services.inventory_client import reserve_stock
@@ -252,3 +253,43 @@ def update_order_status(
     db.refresh(order)
 
     return order
+
+
+@router.post(
+    "/{order_id}/pay",
+    response_model=OrderResponse
+)
+def pay_order(
+    order_id: int,
+    payment_request: OrderPaymentRequest,
+    db: Session = Depends(get_db)
+):
+    # 1. Fetch order
+    order = (
+        db.query(Order)
+        .filter(Order.id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    # 2. Reject transitions for terminal states
+    if order.status in {OrderStatus.DELIVERED, OrderStatus.CANCELLED}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot pay for order in terminal state: {order.status.value}"
+        )
+
+    # 3. Simulate processing mock transaction logs
+    print(f"[Payment Interface] Received simulation charge ({payment_request.payment_method}) for Order #{order.id} totaling ${order.total_amount}")
+
+    # 4. Advance status directly to PAID (bypassing CONFIRMED or moving through it)
+    order.status = OrderStatus.PAID
+    db.commit()
+    db.refresh(order)
+
+    return order

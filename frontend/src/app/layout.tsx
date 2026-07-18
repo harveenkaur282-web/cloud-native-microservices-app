@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
+import { SandboxProvider } from "@/hooks/use-sandbox";
 
-const inter = Inter({
+
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "CloudCart - Cloud-Native E-commerce",
-  description: "CloudCart management dashboard",
+  title: "CloudCart Control Panel — Distributed Commerce Platform",
+  description: "Developer console for monitoring and orchestrating cloud-native microservices.",
 };
 
 export default function RootLayout({
@@ -21,12 +28,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-slate-50 text-slate-900">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="min-h-full flex flex-col font-sans bg-[#FFFDF9] text-[#2E2522] selection:bg-pink-500/20 selection:text-pink-700">
+        <SandboxProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </SandboxProvider>
       </body>
     </html>
   );

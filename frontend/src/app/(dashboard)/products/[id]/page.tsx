@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import PageContainer from '@/components/layout/PageContainer';
 import { api } from '@/services/api';
 import { Product } from '@/types';
-import { ArrowLeft, Package, Calendar, Database, Sparkles, Tag, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Database, Calendar, Tag, AlertCircle, Info, RefreshCw, ShoppingCart } from 'lucide-react';
+import Mascot from '@/components/mascot/Mascot';
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -47,31 +48,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     switch (status) {
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">
+          <span className="inline-flex items-center rounded-xl bg-[#E2FCEF] px-3 py-1 text-[10px] font-extrabold text-[#4ADE80] border border-[#A7F3D0]/30 uppercase">
             Active
           </span>
         );
       case 'DRAFT':
         return (
-          <span className="inline-flex items-center rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-semibold text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+          <span className="inline-flex items-center rounded-xl bg-amber-50 px-3 py-1 text-[10px] font-extrabold text-amber-600 border border-amber-200/50 uppercase">
             Draft
-          </span>
-        );
-      case 'ARCHIVED':
-        return (
-          <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
-            Archived
-          </span>
-        );
-      case 'OUT_OF_STOCK':
-        return (
-          <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/10">
-            Out of Stock
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          <span className="inline-flex items-center rounded-xl bg-slate-50 px-3 py-1 text-[10px] font-extrabold text-slate-500 border border-slate-200/30 uppercase">
             {status}
           </span>
         );
@@ -81,103 +70,92 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   return (
     <PageContainer
       title="Product Details"
-      description="View full configuration profile and technical specifications of this catalog item."
+      description="View full configuration specifications of this catalog item."
     >
-      <div className="space-y-6">
+      <div className="space-y-6 font-sans text-left">
         {/* Back navigation */}
         <div>
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 text-[#FFB7B2]" />
             <span>Back to catalog</span>
           </Link>
         </div>
 
         {loading ? (
-          <div className="animate-pulse bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-sm space-y-6">
-            <div className="h-6 bg-slate-200 rounded w-1/4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="h-64 bg-slate-100 rounded-lg"></div>
-              <div className="space-y-4">
-                <div className="h-8 bg-slate-200 rounded w-3/4"></div>
-                <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-                <div className="h-16 bg-slate-200 rounded w-full"></div>
-              </div>
+          <div className="animate-pulse bg-white border border-[#FFE5D9] rounded-3xl p-6 md:p-8 space-y-6">
+            <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 h-64 bg-slate-100 rounded-3xl"></div>
+              <div className="h-64 bg-slate-100 rounded-3xl"></div>
             </div>
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center p-12 border border-red-200 bg-red-50/50 rounded-lg text-center">
-            <AlertCircle className="h-10 w-10 text-red-500 mb-3" />
-            <h3 className="text-md font-semibold text-slate-900 mb-1">Error Loading Product</h3>
-            <p className="text-sm text-slate-600 max-w-md mb-4">{error}</p>
+          <div className="flex flex-col items-center justify-center p-12 border border-rose-100 bg-rose-50/50 rounded-3xl text-center">
+            <AlertCircle className="h-8 w-8 text-rose-500 mb-3" />
+            <h3 className="text-xs font-bold text-slate-700 uppercase">Failed to load product details</h3>
+            <p className="text-xs text-slate-500 mt-1 mb-4">{error}</p>
             <button
               onClick={fetchProductDetails}
-              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#FFB7B2] border-transparent px-4 py-2 text-xs font-bold text-white shadow hover:bg-[#f3a49e] transition-all cursor-pointer uppercase tracking-wider"
             >
-              Try Again
+              <RefreshCw className="h-3.5 w-3.5" />
+              Retry Fetch
             </button>
           </div>
         ) : product ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Left Detail Panel */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-5 border-b border-slate-100">
-                  {/* Image container */}
-                  <div className="md:col-span-2 bg-slate-50 flex items-center justify-center p-6 border-r border-slate-100 relative min-h-[250px]">
-                    {product.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="object-contain max-h-[200px] w-full rounded"
-                      />
-                    ) : (
-                      <Package className="h-20 w-20 text-slate-300" />
-                    )}
+              <div className="bg-white rounded-3xl border border-[#FFE5D9] shadow-sm overflow-hidden">
+                {/* Header detail */}
+                <div className="p-6 border-b border-[#FFE5D9]/60 flex items-center justify-between bg-[#FFFBF4]/20">
+                  <span className="text-[10px] font-bold text-[#7D726D] uppercase flex items-center gap-1.5">
+                    <Database className="h-4 w-4 text-[#FFB7B2]" />
+                    Catalog Product Registry
+                  </span>
+                  {getStatusBadge(product.status)}
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Title and Category */}
+                  <div className="space-y-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#E8E8FF]/40 border border-[#D8D8FF]/30 px-3 py-1 text-[10px] font-bold text-[#FFB7B2] uppercase">
+                      <Tag className="h-3.5 w-3.5" />
+                      {product.category}
+                    </span>
+                    <h2 className="text-xl font-bold text-[#2E2522]">{product.name}</h2>
+                    <p className="text-xs text-[#7D726D] leading-relaxed font-sans">
+                      {product.description || 'No description details available for this product.'}
+                    </p>
                   </div>
 
-                  {/* Text details */}
-                  <div className="md:col-span-3 p-6 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                          <Tag className="h-3 w-3" />
-                          {product.category}
-                        </span>
-                        {getStatusBadge(product.status)}
-                      </div>
-                      <h2 className="text-2xl font-bold text-slate-900">{product.name}</h2>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {product.description || 'No description available for this product.'}
-                      </p>
-                    </div>
-
-                    <div className="flex items-baseline gap-4 pt-4 border-t border-slate-100">
-                      <span className="text-3xl font-extrabold text-slate-900">
-                        ${parseFloat(product.price).toFixed(2)}
-                      </span>
-                      <span className="text-xs text-slate-400">USD (Plus applicable tax)</span>
-                    </div>
+                  {/* Value */}
+                  <div className="flex items-baseline gap-4 pt-4 border-t border-[#FFE5D9]/40">
+                    <span className="text-3xl font-extrabold text-[#2E2522] tracking-tight">
+                      ₹{parseFloat(product.price).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Base catalog price (INR)</span>
                   </div>
                 </div>
 
-                <div className="p-6 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 text-slate-700">
-                    <Database className="h-5 w-5 text-slate-400" />
-                    <div>
-                      <span className="block text-xs text-slate-400">Database Record Key</span>
-                      <span className="text-xs font-mono font-medium">INT_ID: {product.id}</span>
+                {/* Sub Metadata box */}
+                <div className="p-6 bg-[#FFFBF4]/40 border-t border-[#FFE5D9]/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <Database className="h-4 w-4 text-[#FFB7B2]" />
+                    <div className="text-left font-sans">
+                      <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Catalog Reference Key</span>
+                      <span className="text-xs font-mono font-bold text-[#2E2522]">INT_ID: {product.id}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 text-slate-700">
-                    <Calendar className="h-5 w-5 text-slate-400" />
-                    <div>
-                      <span className="block text-xs text-slate-400">First Published</span>
-                      <span className="text-xs font-medium">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-[#FFB7B2]" />
+                    <div className="text-left font-sans">
+                      <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Record Published</span>
+                      <span className="text-xs text-[#2E2522] font-semibold">
                         {new Date(product.created_at).toLocaleDateString(undefined, {
                           year: 'numeric',
                           month: 'long',
@@ -188,24 +166,40 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
               </div>
+
+              {/* Informative alert box */}
+              <div className="bg-white rounded-3xl border border-[#FFE5D9] p-5 flex items-start gap-4 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-[#FFB7B2]" />
+                <div className="bg-[#FFB7B2]/10 p-2.5 rounded-xl text-[#FFB7B2] border border-[#FFB7B2]/20">
+                  <Info className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-[#2E2522] uppercase tracking-wider">Microservice Telemetry Mapped</h4>
+                  <p className="text-[11px] text-[#7D726D] leading-relaxed font-sans">
+                    Warehouse reserves and physical allocations are handled independently in the <strong>Inventory Service</strong>. Switch to the <Link href="/inventory" className="text-[#FFB7B2] hover:text-[#f3a49e] font-bold underline font-sans">Inventory Console</Link> to check stock levels.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Right Meta Explorer Panel */}
             <div className="space-y-6">
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-4">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                  Product Metadata
+              <div className="bg-white rounded-3xl border border-[#FFE5D9] shadow-sm p-6 space-y-4">
+                <h3 className="text-xs font-bold text-[#2E2522] uppercase tracking-wider flex items-center gap-2">
+                  <Mascot state="idle" size={40} />
+                  Product Attributes
                 </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  JSON attributes stored with this catalog item representing key-value parameters.
+                <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
+                  Custom key-value parameters assigned to this item schema.
                 </p>
 
-                <div className="rounded-lg bg-slate-900 p-4 font-mono text-xs text-slate-200 overflow-x-auto max-h-[300px]">
+                <div className="rounded-2xl bg-[#FFFBF4]/40 border border-[#FFE5D9] p-4 font-mono text-xs text-[#2E2522] overflow-x-auto max-h-[250px]">
                   {product.product_metadata && Object.keys(product.product_metadata).length > 0 ? (
-                    <pre>{JSON.stringify(product.product_metadata, null, 2)}</pre>
+                    <pre className="text-[10px] leading-relaxed text-[#7D726D]">
+                      {JSON.stringify(product.product_metadata, null, 2)}
+                    </pre>
                   ) : (
-                    <span className="text-slate-500 italic">No custom metadata parameters set.</span>
+                    <span className="text-[10px] text-slate-400 italic font-sans">No additional metadata registered.</span>
                   )}
                 </div>
               </div>

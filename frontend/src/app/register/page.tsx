@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { ShoppingBag, Lock, User, Mail, Phone, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, User, Mail, Phone, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Mascot, { MascotState } from '@/components/mascot/Mascot';
+import Logo from '@/components/layout/Logo';
 
 export default function RegisterPage() {
   const { user, register } = useAuth();
@@ -21,6 +23,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mascotState, setMascotState] = useState<MascotState>('idle');
 
   useEffect(() => {
     if (user) {
@@ -28,15 +31,26 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
+  const handleInputChange = (val: string, setter: (v: string) => void) => {
+    setter(val);
+    if (val.length > 0) {
+      setMascotState('typing');
+    } else {
+      setMascotState('idle');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !fullName.trim() || !email.trim() || !phoneNumber.trim() || !address.trim() || !password.trim()) {
       setError('Please fill in all fields.');
+      setMascotState('error');
       return;
     }
 
     setError(null);
     setIsSubmitting(true);
+    setMascotState('typing');
 
     try {
       await register({
@@ -49,62 +63,75 @@ export default function RegisterPage() {
       });
 
       setSuccess(true);
+      setMascotState('success');
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       const detail = err.response?.data?.detail;
-      setError(
-        detail || 'Registration failed. Username or email might already be in use.'
-      );
+      setError(detail || 'Registration failed. Username/email might be registered.');
+      setMascotState('error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-[#FFFDF9] px-4 py-12 relative overflow-hidden select-none">
+      {/* Floating Pastel Shapes */}
       <motion.div
-        initial={{ opacity: 0, y: 6 }}
+        animate={{ y: [0, -15, 0], scale: [1, 1.05, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute -top-12 -left-12 h-64 w-64 rounded-full bg-[#E8E8FF]/40 blur-2xl pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, 20, 0], scale: [1, 0.95, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute -bottom-16 -right-16 h-80 w-80 rounded-full bg-[#FFE5D9]/40 blur-3xl pointer-events-none"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="w-full max-w-lg space-y-8"
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="w-full max-w-lg space-y-6 relative z-10"
       >
         <div className="flex flex-col items-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
-            <ShoppingBag className="h-6 w-6" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white border border-[#FFE5D9] shadow-sm mb-4">
+            <Logo size={44} />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">
-            Create an account
+          <h2 className="text-2xl font-bold tracking-tight text-[#2E2522]">
+            Create a CloudCart Account
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
+          <p className="text-xs text-slate-500 mt-1">
             Or{' '}
             <Link
               href="/login"
-              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              className="font-bold text-[#FFB7B2] hover:text-[#f3a49e] transition-colors underline decoration-dotted"
             >
               sign in to your existing account
             </Link>
           </p>
         </div>
 
-        <div className="bg-white p-8 shadow-sm border border-slate-200 rounded-lg">
+        {/* Mascot */}
+        <div className="flex justify-center -mb-2">
+          <Mascot state={mascotState} size={84} />
+        </div>
+
+        {/* Form panel */}
+        <div className="bg-white/80 backdrop-blur-md p-8 border border-[#FFE5D9] rounded-3xl shadow-xl shadow-pink-900/5 text-left">
           {success ? (
-            <div className="text-center py-6 space-y-3 animate-fadeIn">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">Registration Successful!</h3>
-              <p className="text-sm text-slate-500">Redirecting to the login screen...</p>
+            <div className="text-center py-6 space-y-3 font-sans">
+              <h3 className="text-lg font-bold text-[#2E2522]">Registration Successful!</h3>
+              <p className="text-xs text-slate-500">// Directing to login console...</p>
             </div>
           ) : (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               {error && (
-                <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-100 animate-fadeIn">
-                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                <div className="flex items-start gap-2.5 rounded-2xl bg-rose-50 p-3 text-xs text-rose-800 border border-rose-100 font-sans">
+                  <AlertCircle className="h-4.5 w-4.5 flex-shrink-0 mt-0.5 text-rose-500" />
                   <span>{error}</span>
                 </div>
               )}
@@ -113,7 +140,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="username"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Username
                   </label>
@@ -127,8 +154,10 @@ export default function RegisterPage() {
                       type="text"
                       required
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setUsername)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
                       placeholder="johndoe"
                     />
                   </div>
@@ -137,7 +166,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="fullName"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Full Name
                   </label>
@@ -151,8 +180,10 @@ export default function RegisterPage() {
                       type="text"
                       required
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setFullName)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
                       placeholder="John Doe"
                     />
                   </div>
@@ -161,7 +192,7 @@ export default function RegisterPage() {
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Email Address
                   </label>
@@ -175,8 +206,10 @@ export default function RegisterPage() {
                       type="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setEmail)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -185,7 +218,7 @@ export default function RegisterPage() {
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="phoneNumber"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Phone Number
                   </label>
@@ -199,8 +232,10 @@ export default function RegisterPage() {
                       type="tel"
                       required
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setPhoneNumber)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
                       placeholder="+1 (555) 019-2834"
                     />
                   </div>
@@ -209,7 +244,7 @@ export default function RegisterPage() {
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="address"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Delivery Address
                   </label>
@@ -221,11 +256,13 @@ export default function RegisterPage() {
                       id="address"
                       name="address"
                       required
-                      rows={3}
+                      rows={2}
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="123 Main St, New York, NY 10001"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setAddress)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
+                      placeholder="123 Main St, New York, NY"
                     />
                   </div>
                 </div>
@@ -233,7 +270,7 @@ export default function RegisterPage() {
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block text-[10px] font-bold text-[#2E2522] uppercase tracking-wider"
                   >
                     Password
                   </label>
@@ -247,8 +284,10 @@ export default function RegisterPage() {
                       type="password"
                       required
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setMascotState('typing')}
+                      onBlur={() => setMascotState('idle')}
+                      onChange={(e) => handleInputChange(e.target.value, setPassword)}
+                      className="block w-full rounded-2xl border border-[#FFE5D9] bg-white/60 py-2 pl-9 pr-3 text-xs placeholder-slate-400 focus:border-[#FFB7B2] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2]/20 transition-all font-sans text-[#2E2522]"
                       placeholder="••••••••"
                     />
                   </div>
@@ -259,7 +298,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                  className="flex w-full justify-center items-center rounded-2xl bg-[#FFB7B2] py-3 px-4 text-xs font-bold text-white shadow-md hover:bg-[#f3a49e] focus:outline-none focus:ring-2 focus:ring-[#FFB7B2] focus:ring-offset-2 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 cursor-pointer uppercase tracking-wider"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

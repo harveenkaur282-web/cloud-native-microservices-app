@@ -52,3 +52,9 @@ class OrderResponse(BaseModel):
 class OrderStatusUpdate(BaseModel):
 
     status: OrderStatus
+
+
+
+class OrderPaymentRequest(BaseModel):
+
+    payment_method: str
