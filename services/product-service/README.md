@@ -4,7 +4,7 @@ The Product Service manages items, product pricing, details, and updates the cat
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: FastAPI, SQLAlchemy, Uvicorn.
 * **Integrations**: Makes downstream API client calls to `http://inventory-service:8004` to create stock logs on catalog updates.
@@ -12,14 +12,14 @@ The Product Service manages items, product pricing, details, and updates the cat
 
 ---
 
-## ⚙️ Configuration Variables
+## Configuration Variables
 
 * `DATABASE_URL`: Connection string to dedicated database instance `cloudcart_products`.
 * `INVENTORY_SERVICE_URL`: Inter-service URL to talk to Inventory Service (defaults to `http://inventory-service:8004` in Kubernetes).
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the Product Service locally:
 

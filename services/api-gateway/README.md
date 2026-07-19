@@ -4,7 +4,7 @@ The API Gateway acts as the single entrypoint and reverse proxy for all backend 
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: FastAPI (Python 3.14) & Uvicorn (ASGI server).
 * **HTTP Client**: Asynchronous HTTP request forwarding using `httpx`.
@@ -13,7 +13,7 @@ The API Gateway acts as the single entrypoint and reverse proxy for all backend 
 
 ---
 
-## ⚙️ Routing Logic Configuration
+## Routing Logic Configuration
 
 The gateway retrieves service addresses dynamically on start using environment variables:
 * `USER_SERVICE_URL`: Internally routes requests from `/api/v1/users/*` to `http://user-service:8001`.
@@ -23,7 +23,7 @@ The gateway retrieves service addresses dynamically on start using environment v
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the API Gateway locally without Docker:
 

@@ -4,7 +4,7 @@ The Order Service handles the transaction purchase workflows, tracking order sta
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: FastAPI, SQLAlchemy, Uvicorn.
 * **Integrations**: Checks catalog prices dynamically by calling the Product Service, and reserves warehouse quantities by calling the Inventory Service.
@@ -12,7 +12,7 @@ The Order Service handles the transaction purchase workflows, tracking order sta
 
 ---
 
-## ⚙️ Configuration Variables
+## Configuration Variables
 
 * `DATABASE_URL`: Connection string to dedicated database instance `cloudcart_orders`.
 * `PRODUCT_SERVICE_URL`: Inter-service URL to talk to Product Service (defaults to `http://product-service:8002` in Kubernetes).
@@ -20,7 +20,7 @@ The Order Service handles the transaction purchase workflows, tracking order sta
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the Order Service locally:
 

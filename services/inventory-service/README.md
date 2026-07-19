@@ -4,7 +4,7 @@ The Inventory Service tracks product stock, handles stock replenishments, and lo
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: FastAPI, SQLAlchemy, Uvicorn.
 * **Concurrency Protection**: Implements basic database row checks during volume reservation transactions to prevent double-booking issues.
@@ -12,13 +12,13 @@ The Inventory Service tracks product stock, handles stock replenishments, and lo
 
 ---
 
-## ⚙️ Configuration Variables
+## Configuration Variables
 
 * `DATABASE_URL`: Connection string to dedicated database instance `cloudcart_inventory`.
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the Inventory Service locally:
 

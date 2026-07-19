@@ -4,41 +4,42 @@ CloudCart is a modern, decoupled cloud-native e-commerce application structured 
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
-                                    [ Browser Client ]
-                                           │ (Port 80 / localhost)
-                                           ▼
-                               ┌──────────────────────┐
-                               │     NGINX Ingress    │
-                               └───────────┬──────────┘
-                                           │
-                       ┌───────────────────┴───────────────────┐
-                       ▼ (Path: /)                             ▼ (Path: /api/v1/*)
-             ┌───────────────────┐                   ┌───────────────────┐
-             │ Next.js Frontend  │                   │    API Gateway    │
-             │   (Port 3000)     │                   │    (Port 8000)    │
-             └───────────────────┘                   └─────────┬─────────┘
-                                                               │
-                               ┌───────────────────────────────┼───────────────────────────────┐
-                               ▼                               ▼                               ▼
-                     ┌───────────────────┐           ┌───────────────────┐           ┌───────────────────┐
-                     │   User Service    │           │  Product Service  │           │   Order Service   │
-                     │    (Port 8001)    │           │    (Port 8002)    │           │    (Port 8003)    │
-                     └─────────┬─────────┘           └─────────┬─────────┘           └─────────┬─────────┘
-                               │                               │                               │
-                               ▼                               ▼                               ▼
-                     ┌───────────────────┐           ┌───────────────────┐           ┌───────────────────┐
-                     │ PostgreSQL (Users)│           │ PostgreSQL (Prods)│           │ PostgreSQL (Orders)
-                     └───────────────────┘           └───────────────────┘           └───────────────────┘
+                                     [ Browser Client ]
+                                             │ (Port 80 / localhost)
+                                             ▼
+                                 ┌──────────────────────┐
+                                 │     NGINX Ingress    │
+                                 └───────────┬──────────┘
+                                             │
+                         ┌───────────────────┴───────────────────┐
+                         ▼ (Path: /)                             ▼ (Path: /api/v1/*)
+               ┌───────────────────┐                   ┌───────────────────┐
+               │ Next.js Frontend  │                   │    API Gateway    │
+               │   (Port 3000)     │                   │    (Port 8000)    │
+               └───────────────────┘                   └─────────┬─────────┘
+                                                                 │
+         ┌───────────────────────────────┬───────────────────────┼───────────────────────┐
+         ▼                               ▼                       ▼                       ▼
+┌───────────────────┐           ┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+│   User Service    │           │  Product Service  │   │   Order Service   │   │ Inventory Service │
+│    (Port 8001)    │           │    (Port 8002)    │   │    (Port 8003)    │   │    (Port 8004)    │
+└─────────┬─────────┘           └─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘
+          │                               │                       │                       │
+          ▼                               ▼                       ▼                       ▼
+┌───────────────────┐           ┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+│ PostgreSQL (Users)│           │ PostgreSQL + JSONB│   │PostgreSQL (Orders)│   │ PostgreSQL (Inv)  │
+│                   │           │    (Products)     │   │                   │   │                   │
+└───────────────────┘           └───────────────────┘   └───────────────────┘   └───────────────────┘
 ```
 
-The system separates concerns at the database layer (Database-per-Service pattern). Services communicate internally within the cluster DNS space, and traffic is routed dynamically using path prefixes matching the target endpoint signatures.
+The system separates concerns at the database layer (Database-per-Service pattern). Product Service leverages PostgreSQL JSONB columns to enable schema flexibility for catalogs. Services communicate internally within the cluster DNS space, and traffic is routed dynamically using path prefixes matching the target endpoint signatures.
 
 ---
 
-## 📂 Repository File Structure
+## Repository File Structure
 
 ```
 cloud-native-microservices-app/
@@ -63,7 +64,7 @@ cloud-native-microservices-app/
 
 ---
 
-## 🔒 Configuration & Secrets Isolation
+## Configuration & Secrets Isolation
 
 To prevent credential leaks, sensitive configurations are kept separate:
 1. **ConfigMaps (`kubernetes/configmaps/app-config.yaml`)**: Manages endpoints, token expiration limits, and public variables.
@@ -72,7 +73,7 @@ To prevent credential leaks, sensitive configurations are kept separate:
 
 ---
 
-## 💻 1. Local Process Deployment (Open Ports - Bare Metal)
+## 1. Local Process Deployment (Open Ports - Bare Metal)
 
 For fast prototyping and code modifications, you can run all services directly on your host machine:
 
@@ -127,7 +128,7 @@ Open `http://localhost:3000` to interact with the dashboard.
 
 ---
 
-## 🐳 2. Docker Compose Deployment
+## 2. Docker Compose Deployment
 
 We use environment file interpolation to keep credentials out of the docker-compose manifest.
 
@@ -148,7 +149,7 @@ We use environment file interpolation to keep credentials out of the docker-comp
 
 ---
 
-## 🚀 3. Kubernetes Deploy Steps (Minikube / Local)
+## 3. Advanced Kubernetes Deploy Steps (Minikube / Local)
 
 Follow this deployment path to instantiate the cluster from local builds:
 
@@ -217,9 +218,9 @@ Now browse to `http://localhost` (or configure your Windows hosts file to point 
 
 ---
 
-## 🔮 Future Roadmap & Improvements
+## Future Roadmap & Improvements
 
-* 🚀 **CI/CD Build Pipelines**: Automate code linting, unit testing, and Docker builds via GitHub Actions on every pull request.
-* ☁️ **Production Cloud Scaling**: Target GKE (Google Kubernetes Engine) or EKS (Amazon Elastic Kubernetes Service) using Helm charts.
-* 📈 **Observability & Log Aggregation**: Install Prometheus, Grafana, and Loki agents to monitor pod metrics and service error traces.
-* ⚖️ **Horizontal Pod Autoscaling**: Automatically scale replicas based on CPU threshold spikes using the Kubernetes Metrics Server.
+* **CI/CD Build Pipelines**: Automate code linting, unit testing, and Docker builds via GitHub Actions on every pull request.
+* **Production Cloud Scaling**: Target GKE (Google Kubernetes Engine) or EKS (Amazon Elastic Kubernetes Service) using Helm charts.
+* **Observability & Log Aggregation**: Install Prometheus, Grafana, and Loki agents to monitor pod metrics and service error traces.
+* **Horizontal Pod Autoscaling**: Automatically scale replicas based on CPU threshold spikes using the Kubernetes Metrics Server.

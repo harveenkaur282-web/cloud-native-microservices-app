@@ -4,7 +4,7 @@ This is the user-facing web dashboard of the CloudCart platform. Built using Nex
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: Next.js 16 (React 19, App Router, TypeScript, Client & Server Components).
 * **Styling**: Vanilla CSS structure styled with custom Tailwind variables for a modern layout.
@@ -13,7 +13,7 @@ This is the user-facing web dashboard of the CloudCart platform. Built using Nex
 
 ---
 
-## 📁 File Structure Highlights
+## File Structure Highlights
 
 ```
 frontend/
@@ -30,14 +30,14 @@ frontend/
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 The Next.js client routes all downstream requests to the gateway via:
 * `NEXT_PUBLIC_API_GATEWAY_URL`: Configured through `cloudcart-config` ConfigMap. In development/Ingress contexts, this defaults to `/api/v1` to allow relative proxying, preventing CORS blocking issues in host browsers.
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the frontend client locally for development:
 

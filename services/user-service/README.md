@@ -4,7 +4,7 @@ The User Service handles user registration, credentials validation, password has
 
 ---
 
-## 🛠️ Tech Stack Features
+## Tech Stack Features
 
 * **Framework**: FastAPI, SQLAlchemy ORM, Uvicorn.
 * **Security Hashing**: Cryptographic password salting using `passlib` with `bcrypt`.
@@ -13,7 +13,7 @@ The User Service handles user registration, credentials validation, password has
 
 ---
 
-## ⚙️ Configuration Variables
+## Configuration Variables
 
 The service reads the following variables from ConfigMaps & Secrets:
 * `DATABASE_URL`: Connection string (e.g., `postgresql://postgres:your_password@postgres:5432/cloudcart_users`).
@@ -23,7 +23,7 @@ The service reads the following variables from ConfigMaps & Secrets:
 
 ---
 
-## 🚀 Local Development (Docker-less)
+## Local Development (Docker-less)
 
 To run the User Service locally:
 
