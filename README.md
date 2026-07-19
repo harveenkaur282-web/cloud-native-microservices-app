@@ -233,10 +233,10 @@ The repository includes a production-grade DevOps automation suite structured in
 * **Database Operations Check (database-check.yml)**: Spins up a temporary PostgreSQL instance to validate SQLAlchemy structures and Alembic migration scripts.
 * **Release Manager (release.yml)**: Automates Git tag-based releases and generates release changelogs.
 
-### Production-Ready Templates (Configured as .disabled files)
-To enable these, configure your credentials in GitHub Secrets and rename the files to `.yml`:
-* **Docker Registry Publish (docker-build-push.disabled)**: Builds and pushes versioned images to Docker Hub. Requires `DOCKER_USERNAME` and `DOCKER_PASSWORD` secrets.
-* **Cluster Deployment (deploy.disabled)**: Deploys updated images to your cluster with rolling rollouts and automatic rollback on failure. Requires `KUBECONFIG_DATA` secret.
+### Future CI/CD Pipeline Extensions (Configured as Disabled Templates)
+To activate these pipelines as part of future production iterations, configure the respective repository credentials in GitHub Secrets and rename the files to `.yml`:
+* **Automated Docker Hub Registry Publish (docker-build-push.disabled)**: Builds and pushes compiled production image layers to Docker Hub. Requires setting up `DOCKER_USERNAME` and `DOCKER_PASSWORD` secrets.
+* **Rolling Cluster Deployment (deploy.disabled)**: Connects directly to a remote cluster to apply automated updates with rollback protection. Requires setting up a `KUBECONFIG_DATA` secret.
 
 ---
 
