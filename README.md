@@ -242,8 +242,10 @@ To activate these pipelines as part of future production iterations, configure t
 
 ## Future Roadmap & Improvements
 
-* **Production Cloud Migration**: Target managed public cloud clusters (such as Amazon EKS, Google GKE, or Azure AKS) using Helm Charts.
-* **Observability Stack**: Deploy Prometheus and Grafana operators inside the Kubernetes namespace to scrape FastAPI endpoint metrics and visualize load parameters.
-* **Centralized Log Aggregation**: Set up Grafana Loki or ELK agents to collect stdout logs from all microservice pods.
-* **Horizontal Pod Autoscaling (HPA)**: Configure automatic scaling rules to dynamically adjust microservice pod counts based on CPU threshold spikes.
+* **Cost-Effective Cloud Migration (AWS Free Tier)**: Target deployment on a single-node **AWS EC2 instance (t2.micro / t3.micro)** within the AWS Free Tier (750 free hours/month). Run a lightweight Kubernetes distribution like **K3s** (packaged with Traefik ingress and sqlite) to manage container pods within memory limits, avoiding expensive EKS control plane fees.
+* **Serverless Analytics Integration (Cloud Computing Project)**: Develop an event-driven data pipeline. When the Order Service processes a transaction, trigger an **AWS Lambda** serverless function to write order JSON payloads to an **Amazon S3** bucket. Use **Amazon Athena** to query S3 datasets directly using SQL, showcasing a serverless, decoupled analytics pipeline.
+* **Content Delivery Network (CDN) Caching**: Route DNS through **AWS Route 53** and cache Next.js static files and media assets at edge locations using **AWS CloudFront (CDN)** to reduce latency.
+* **Infrastructure as Code (IaC)**: Standardize cloud resource provisioning using free-tier **Terraform Cloud** declarations to define EC2, security groups, and S3 resources.
+* **Observability Stack**: Deploy Prometheus and Grafana operators inside the cluster to scrape FastAPI microservice endpoints and visualize resource telemetry.
+* **Centralized Log Aggregation**: Configure Grafana Loki to stream stdout console logs from all running pods to a unified dashboard.
 
