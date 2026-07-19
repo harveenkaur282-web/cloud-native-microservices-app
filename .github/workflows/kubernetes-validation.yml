@@ -1,0 +1,41 @@
+name: Kubernetes Manifest Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'kubernetes/**'
+
+jobs:
+  validate:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubeconform
+        uses: github/super-linter/bootcamps@v5 # Using standard tools or curl install
+        run: |
+          curl -L -s https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Run Kubeconform validation
+        run: |
+          # Recursively validate all yaml manifests in kubernetes directory
+          # Ignores postgres-secret.yaml if it does not exist (we scan templates)
+          kubeconform -summary -strict -ignore-missing-schemas kubernetes/
+
+      - name: Create local Kind Cluster for dry-run validation
+        uses: helm/kind-action@v1.9.0
+        with:
+          install_only: false
+
+      - name: Run kubectl dry-run validation
+        run: |
+          # Apply namespace first
+          kubectl apply -f kubernetes/namespace.yaml --dry-run=client
+          
+          # Dry run validate all configmaps, PVC, services, and deployments
+          kubectl apply -R -f kubernetes/ --dry-run=server

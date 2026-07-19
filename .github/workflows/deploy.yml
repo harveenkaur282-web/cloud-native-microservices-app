@@ -1,0 +1,70 @@
+name: Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ["Docker Build & Push"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Cluster
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubeconfig authentication
+        run: |
+          mkdir -p ~/.kube
+          # Decodes and writes kubeconfig credentials stored in GitHub Secret 'KUBECONFIG_DATA'
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+
+      - name: Update Manifest Deployment Images
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          # Dynamically patch deploy definitions with the matching version/sha tag
+          # This aligns with the docker-build-push build output
+          sed -i "s|image: harveen421/cloudcart-user-service:.*|image: harveen421/cloudcart-user-service:v1.0.0-${SHA}|g" kubernetes/user-service/deployment.yaml
+          sed -i "s|image: harveen421/cloudcart-product-service:.*|image: harveen421/cloudcart-product-service:v1.0.0-${SHA}|g" kubernetes/product-service/deployment.yaml
+          sed -i "s|image: harveen421/cloudcart-order-service:.*|image: harveen421/cloudcart-order-service:v1.0.0-${SHA}|g" kubernetes/order-service/deployment.yaml
+          sed -i "s|image: harveen421/cloudcart-inventory-service:.*|image: harveen421/cloudcart-inventory-service:v1.0.0-${SHA}|g" kubernetes/inventory-service/deployment.yaml
+          sed -i "s|image: harveen421/cloudcart-api-gateway:.*|image: harveen421/cloudcart-api-gateway:v1.0.0-${SHA}|g" kubernetes/api-gateway/deployment.yaml
+          sed -i "s|image: harveen421/cloudcart-frontend:.*|image: harveen421/cloudcart-frontend:v1.0.0-${SHA}|g" kubernetes/frontend/deployment.yaml
+
+      - name: Apply Manifest configs
+        run: |
+          # Apply namespace, ConfigMaps, Secrets, PVC first
+          kubectl apply -f kubernetes/namespace.yaml
+          kubectl apply -f kubernetes/configmaps/
+          kubectl apply -f kubernetes/secrets/postgres-secret.yaml --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f kubernetes/postgres/
+
+      - name: Apply Microservice Deployments and Services
+        run: |
+          kubectl apply -f kubernetes/user-service/
+          kubectl apply -f kubernetes/product-service/
+          kubectl apply -f kubernetes/inventory-service/
+          kubectl apply -f kubernetes/order-service/
+          kubectl apply -f kubernetes/api-gateway/
+          kubectl apply -f kubernetes/frontend/
+          kubectl apply -f kubernetes/ingress/
+
+      - name: Monitor Rollout Status & Auto-Rollback on Failure
+        run: |
+          # Define rollout target deployments
+          deployments=("user-service" "product-service" "inventory-service" "order-service" "api-gateway" "frontend")
+          
+          for deploy in "${deployments[@]}"; do
+            echo "Monitoring rollout status for deployment/${deploy} in namespace cloudcart..."
+            # Check rollout status. If it fails (non-zero code), trigger immediate rollback
+            if ! kubectl rollout status deployment/${deploy} -n cloudcart --timeout=120s; then
+              echo "WARNING: Rollout failed for deployment/${deploy}. Initiating rollback..."
+              kubectl rollout undo deployment/${deploy} -n cloudcart
+              echo "Rollback completed for deployment/${deploy}."
+              exit 1
+            fi
+          done

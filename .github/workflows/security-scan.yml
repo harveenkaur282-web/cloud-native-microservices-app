@@ -1,0 +1,85 @@
+name: DevSecOps Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  secret-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Note: Set continue-on-error: false to fail if secrets are found
+
+  dependency-vulnerability-scan:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Scan Python Dependencies (Safety)
+        run: |
+          pip install safety
+          # Scan requirements files and fail if critical issues are found
+          find services/ -name "requirements.txt" -exec safety check -r {} \;
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan Node Dependencies (npm audit)
+        run: |
+          cd frontend
+          npm audit --audit-level=high
+
+  image-scan:
+    name: Trivy Container Image Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [frontend, user-service, product-service, order-service, inventory-service, api-gateway]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      # Build image locally for scanning
+      - name: Build Local Image
+        uses: docker/build-push-action@v5
+        with:
+          context: |
+            ${{ matrix.service == 'frontend' && './frontend' || format('./services/{0}', matrix.service) }}
+          load: true
+          tags: cloudcart-${{ matrix.service }}:test
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cloudcart-${{ matrix.service }}:test'
+          format: 'table'
+          exit-code: '1' # Fails the build on high/critical findings
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'

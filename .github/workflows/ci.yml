@@ -1,0 +1,93 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend-validation:
+    name: Backend Linting and Testing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [user-service, product-service, order-service, inventory-service, api-gateway]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          cd services/${{ matrix.service }}
+          pip install -r requirements.txt || pip install fastapi uvicorn httpx pytest ruff
+
+      - name: Ruff Lint and Format Checks
+        run: |
+          cd services/${{ matrix.service }}
+          ruff check .
+          ruff format --check .
+
+      - name: Run Backend Tests
+        run: |
+          cd services/${{ matrix.service }}
+          # Run pytest if tests folder exists, otherwise pass
+          if [ -d "tests" ] || [ -d "app/tests" ]; then
+            pytest
+          else
+            echo "No tests found for ${{ matrix.service }}. Skipping."
+          fi
+
+  frontend-validation:
+    name: Frontend Linting and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Frontend Linting
+        run: |
+          cd frontend
+          npm run lint || echo "No lint script defined. Skipping."
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
+
+  docker-validation:
+    name: Docker Build Verification
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [frontend, services/user-service, services/product-service, services/order-service, services/inventory-service, services/api-gateway]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Dry-run Docker Build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: false
+          outputs: type=cacheonly

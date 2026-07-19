@@ -1,0 +1,58 @@
+name: Database Operations Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/**/models.py'
+      - 'services/**/migrations/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'services/**/models.py'
+      - 'services/**/migrations/**'
+
+jobs:
+  db-check:
+    name: Database Integrity & Alembic Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Spin up Postgres Docker Test Instance
+        run: |
+          docker run --name test-postgres -e POSTGRES_PASSWORD=test_password -e POSTGRES_USER=test_user -p 5432:5432 -d postgres:16
+          # Wait for PostgreSQL to become fully active and healthy
+          until docker exec test-postgres pg_isready -U test-user; do
+            echo "Waiting for PostgreSQL database container to be ready..."
+            sleep 2
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate Alembic migrations dry-run
+        run: |
+          # Iterate through services. If Alembic is configured, run dry-run validation checks
+          # Alembic commands are prepared as future-ready placeholders
+          services=("user-service" "product-service" "order-service" "inventory-service")
+          
+          for service in "${services[@]}"; do
+            if [ -f "services/${service}/alembic.ini" ]; then
+              echo "Alembic config found for ${service}. Validating migrations..."
+              cd services/${service}
+              pip install -r requirements.txt || pip install alembic sqlalchemy psycopg2-binary
+              # Validate database connection and run upgrade migrations to head
+              export DATABASE_URL="postgresql://test_user:test_password@localhost:5432/test_${service//-/_}"
+              docker exec test-postgres psql -U test_user -c "CREATE DATABASE test_${service//-/_};"
+              alembic upgrade head
+              cd ../..
+            else
+              echo "Alembic not configured yet for ${service}. Skipping migration check."
+            fi
+          done
