@@ -25,6 +25,8 @@ The gateway retrieves service addresses dynamically on start using environment v
 
 ## Local Development (Docker-less)
 
+> **Important**: This service requires its own isolated virtual environment created within this directory. Do not share a single virtual environment across different microservices.
+
 To run the API Gateway locally without Docker:
 
 1. **Activate virtual environment**:

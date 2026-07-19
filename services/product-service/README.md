@@ -21,6 +21,8 @@ The Product Service manages items, product pricing, details, and updates the cat
 
 ## Local Development (Docker-less)
 
+> **Important**: This service requires its own isolated virtual environment created within this directory. Do not share a single virtual environment across different microservices.
+
 To run the Product Service locally:
 
 1. **Activate virtual environment**:
