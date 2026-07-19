@@ -51,7 +51,7 @@ jobs:
           SHA=$(git rev-parse --short HEAD)
           # Get semantic version from package.json or defaults to v1.0.0
           if [ "${{ matrix.name }}" = "frontend" ] && [ -f "frontend/package.json" ]; then
-            VERSION="v$(node -p "require('./frontend/package.json').version" 2>/dev/null || echo "1.0.0")"
+            VERSION="v$(jq -r '.version' frontend/package.json 2>/dev/null || echo "1.0.0")"
           else
             VERSION="v1.0.0"
           fi

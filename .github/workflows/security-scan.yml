@@ -69,8 +69,7 @@ jobs:
       - name: Build Local Image
         uses: docker/build-push-action@v5
         with:
-          context: |
-            ${{ matrix.service == 'frontend' && './frontend' || format('./services/{0}', matrix.service) }}
+          context: ${{ matrix.service == 'frontend' && './frontend' || format('./services/{0}', matrix.service) }}
           load: true
           tags: cloudcart-${{ matrix.service }}:test
 
