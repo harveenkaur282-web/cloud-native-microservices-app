@@ -222,6 +222,8 @@ Now browse to `http://localhost` (or configure your Windows hosts file to point 
 
 ## DevOps Automation & CI/CD Workflows
 
+![DevOps Workflows Diagram](docs/workflows_diagram.png)
+
 The repository includes a production-grade DevOps automation suite structured in GitHub Actions.
 
 ### Active Workflows (Run automatically on pushes/PRs)
