@@ -218,9 +218,30 @@ Now browse to `http://localhost` (or configure your Windows hosts file to point 
 
 ---
 
+---
+
+## DevOps Automation & CI/CD Workflows
+
+The repository includes a production-grade DevOps automation suite structured in GitHub Actions.
+
+### Active Workflows (Run automatically on pushes/PRs)
+* **Continuous Integration (ci.yml)**: Validates code health by running Ruff checks (lint/format), executing pytest suites for Python services, running npm lint/build for Next.js, and verify-compiling all Dockerfiles.
+* **DevSecOps Security Scan (security-scan.yml)**: Scans for credential leaks (Gitleaks), validates Node/Python package security (npm audit / pip-audit), and analyzes container image vulnerabilities using Trivy.
+* **Kubernetes Manifest Validation (kubernetes-validation.yml)**: Conforms YAML configuration formats via `kubeconform` and validates manifests using dry-run tests in a local `Kind` cluster.
+* **Database Operations Check (database-check.yml)**: Spins up a temporary PostgreSQL instance to validate SQLAlchemy structures and Alembic migration scripts.
+* **Release Manager (release.yml)**: Automates Git tag-based releases and generates release changelogs.
+
+### Production-Ready Templates (Configured as .disabled files)
+To enable these, configure your credentials in GitHub Secrets and rename the files to `.yml`:
+* **Docker Registry Publish (docker-build-push.disabled)**: Builds and pushes versioned images to Docker Hub. Requires `DOCKER_USERNAME` and `DOCKER_PASSWORD` secrets.
+* **Cluster Deployment (deploy.disabled)**: Deploys updated images to your cluster with rolling rollouts and automatic rollback on failure. Requires `KUBECONFIG_DATA` secret.
+
+---
+
 ## Future Roadmap & Improvements
 
-* **CI/CD Build Pipelines**: Automate code linting, unit testing, and Docker builds via GitHub Actions on every pull request.
-* **Production Cloud Scaling**: Target GKE (Google Kubernetes Engine) or EKS (Amazon Elastic Kubernetes Service) using Helm charts.
-* **Observability & Log Aggregation**: Install Prometheus, Grafana, and Loki agents to monitor pod metrics and service error traces.
-* **Horizontal Pod Autoscaling**: Automatically scale replicas based on CPU threshold spikes using the Kubernetes Metrics Server.
+* **Production Cloud Migration**: Target managed public cloud clusters (such as Amazon EKS, Google GKE, or Azure AKS) using Helm Charts.
+* **Observability Stack**: Deploy Prometheus and Grafana operators inside the Kubernetes namespace to scrape FastAPI endpoint metrics and visualize load parameters.
+* **Centralized Log Aggregation**: Set up Grafana Loki or ELK agents to collect stdout logs from all microservice pods.
+* **Horizontal Pod Autoscaling (HPA)**: Configure automatic scaling rules to dynamically adjust microservice pod counts based on CPU threshold spikes.
+
