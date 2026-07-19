@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: harveen421/cloudcart-user-service:v1
-        imagePullPolicy: IfNotPresent
+        image: cloud-native-microservices-app-user-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8001
         env:
@@ -42,16 +42,15 @@ spec:
             configMapKeyRef:
               name: cloudcart-config
               key: ACCESS_TOKEN_EXPIRE_MINUTES
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-  namespace: cloudcart
-spec:
-  selector:
-    app: user-service
-  ports:
-  - port: 8001
-    targetPort: 8001
-  type: ClusterIP
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 10

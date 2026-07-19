@@ -61,11 +61,20 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             "username": new_user.username,
             "email": new_user.email
         }
-    except IntegrityError:
+    except IntegrityError as e:
         db.rollback()
+        error_msg = str(e.orig)
+        if "phone_number" in error_msg:
+            detail = "Phone number already registered"
+        elif "email" in error_msg:
+            detail = "Email address already registered"
+        elif "username" in error_msg:
+            detail = "Username already exists"
+        else:
+            detail = "Username, email, or phone number already exists"
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Username or email already exists"
+            detail=detail
         )
     
 @router.post("/login")

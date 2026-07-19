@@ -1,197 +1,225 @@
-# CloudCart — Cloud-Native Microservices E-Commerce Platform
+# CloudCart — Production-Grade Kubernetes Microservices Platform
 
-A production-style, cloud-native e-commerce application built with independently deployable microservices, a centralized API Gateway, and a modern Next.js management dashboard.
+CloudCart is a modern, decoupled cloud-native e-commerce application structured into independently scaling microservices, a reverse-proxy API Gateway, and an interactive Next.js management dashboard.
 
 ---
 
-## Architecture Overview
+## 🏗️ System Architecture
 
 ```
-┌────────────────────┐
-│   Next.js Frontend │  Port 3000
-│   (App Router)     │
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│   FastAPI Gateway   │  Port 8000
-│   (Reverse Proxy)   │
-└────────┬───────────┘
-         │
-    ┌────┼────┬────────────┐
-    ▼    ▼    ▼            ▼
-┌──────┐┌──────┐┌────────┐┌───────────┐
-│ User ││ Prod ││ Order  ││ Inventory │
-│ Svc  ││ Svc  ││ Svc    ││ Svc       │
-│ 8001 ││ 8002 ││ 8003   ││ 8004      │
-└──┬───┘└──┬───┘└──┬─────┘└──┬────────┘
-   │       │       │         │
-   ▼       ▼       ▼         ▼
-┌──────┐┌──────┐┌──────┐┌──────┐
-│ PG   ││ PG   ││ PG   ││ PG   │
-│ DB   ││ DB   ││ DB   ││ DB   │
-└──────┘└──────┘└──────┘└──────┘
+                                    [ Browser Client ]
+                                           │ (Port 80 / localhost)
+                                           ▼
+                               ┌──────────────────────┐
+                               │     NGINX Ingress    │
+                               └───────────┬──────────┘
+                                           │
+                       ┌───────────────────┴───────────────────┐
+                       ▼ (Path: /)                             ▼ (Path: /api/v1/*)
+             ┌───────────────────┐                   ┌───────────────────┐
+             │ Next.js Frontend  │                   │    API Gateway    │
+             │   (Port 3000)     │                   │    (Port 8000)    │
+             └───────────────────┘                   └─────────┬─────────┘
+                                                               │
+                               ┌───────────────────────────────┼───────────────────────────────┐
+                               ▼                               ▼                               ▼
+                     ┌───────────────────┐           ┌───────────────────┐           ┌───────────────────┐
+                     │   User Service    │           │  Product Service  │           │   Order Service   │
+                     │    (Port 8001)    │           │    (Port 8002)    │           │    (Port 8003)    │
+                     └─────────┬─────────┘           └─────────┬─────────┘           └─────────┬─────────┘
+                               │                               │                               │
+                               ▼                               ▼                               ▼
+                     ┌───────────────────┐           ┌───────────────────┐           ┌───────────────────┐
+                     │ PostgreSQL (Users)│           │ PostgreSQL (Prods)│           │ PostgreSQL (Orders)
+                     └───────────────────┘           └───────────────────┘           └───────────────────┘
 ```
 
-The frontend communicates **exclusively** through the API Gateway (port 8000). The Gateway forwards requests to downstream microservices based on the URL path prefix:
-
-| Frontend Request Path | Downstream Service | Downstream URL |
-|---|---|---|
-| `/users/*` | User Service | `http://localhost:8001/api/v1/users/*` |
-| `/products/*` | Product Service | `http://localhost:8002/api/v1/products/*` |
-| `/orders/*` | Order Service | `http://localhost:8003/api/v1/orders/*` |
-| `/inventory/*` | Inventory Service | `http://localhost:8004/api/v1/inventory/*` |
+The system separates concerns at the database layer (Database-per-Service pattern). Services communicate internally within the cluster DNS space, and traffic is routed dynamically using path prefixes matching the target endpoint signatures.
 
 ---
 
-## Microservices
+## 📂 Repository File Structure
 
-### User Service (Port 8001)
-- **Framework**: FastAPI + SQLAlchemy + PostgreSQL
-- **Responsibilities**: User registration, login (username/password), JWT token generation (HS256), user profile retrieval and updates.
-- **Auth Flow**: Issues JWT access tokens on login. The `sub` claim contains the username.
-
-### Product Service (Port 8002)
-- **Framework**: FastAPI + SQLAlchemy + PostgreSQL
-- **Responsibilities**: Product CRUD (create, list, get, update, archive). Supports filtering by `category`, `search`, and `page`/`limit` pagination. On product creation, calls Inventory Service to initialize stock.
-
-### Order Service (Port 8003)
-- **Framework**: FastAPI + SQLAlchemy + PostgreSQL
-- **Responsibilities**: Order creation (validates products via Product Service, reserves stock via Inventory Service), order listing, order details, and status lifecycle transitions via PATCH.
-- **Status Lifecycle**: `PENDING` → `CONFIRMED` → `PAID` → `SHIPPED` → `DELIVERED` (or `CANCELLED` from PENDING/CONFIRMED/PAID).
-
-### Inventory Service (Port 8004)
-- **Framework**: FastAPI + SQLAlchemy + PostgreSQL
-- **Responsibilities**: Stock tracking per product. Maintains `available_quantity` and `reserved_quantity`. Supports stock reservation (for orders) and release (for cancellations).
-
-### API Gateway (Port 8000)
-- **Framework**: FastAPI + httpx
-- **Responsibilities**: Reverse proxy routing. Forwards all methods (GET, POST, PUT, PATCH, DELETE) to downstream services. Preserves query parameters and request headers.
-
----
-
-## Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS v4, Framer Motion |
-| UI Components | shadcn/ui, Lucide React icons |
-| HTTP Client | Axios (with JWT interceptor) |
-| Backend Services | Python, FastAPI, SQLAlchemy ORM |
-| Databases | PostgreSQL (one per service) |
-| Authentication | JWT (HS256) via User Service |
-| API Gateway | FastAPI reverse proxy with httpx |
+```
+cloud-native-microservices-app/
+├── frontend/                    # Next.js 16 App Router dashboard client
+│   ├── src/                     # React core components and pages
+│   └── public/                  # Static assets and icons
+├── services/
+│   ├── api-gateway/             # FastAPI reverse proxy gateway
+│   ├── user-service/            # Auth and user profile management service
+│   ├── product-service/         # Product catalog service
+│   ├── order-service/           # Order processing and lifecycle service
+│   └── inventory-service/       # Stock tracking and inventory reservation
+├── kubernetes/
+│   ├── secrets/                 # Base64 configuration credentials (template-provided)
+│   ├── configmaps/              # Shared non-sensitive environment variables
+│   ├── postgres/                # PVC-backed local database deployments
+│   ├── ingress/                 # Split routing ingress paths
+│   └── [service]/               # Individual service deployment & service files
+├── .env.template                # Local configuration environment variable template
+└── docker-compose.yml.template  # Docker Compose orchestration template
+```
 
 ---
 
-## Service Ports
+## 🔒 Configuration & Secrets Isolation
 
-| Service | Port | Purpose |
-|---|---|---|
-| Frontend | 3000 | Next.js development server |
-| API Gateway | 8000 | Reverse proxy / request router |
-| User Service | 8001 | Authentication & user profiles |
-| Product Service | 8002 | Product catalog management |
-| Order Service | 8003 | Order lifecycle management |
-| Inventory Service | 8004 | Warehouse stock tracking |
+To prevent credential leaks, sensitive configurations are kept separate:
+1. **ConfigMaps (`kubernetes/configmaps/app-config.yaml`)**: Manages endpoints, token expiration limits, and public variables.
+2. **Secrets (`kubernetes/secrets/postgres-secret.yaml`)**: Stores raw passwords, connection strings, and encryption keys. This file is explicitly excluded via `.gitignore`.
+3. **Template Helper**: Fill out values in `postgres-secret.template.yaml`, encode them to base64, and save as `postgres-secret.yaml` before running deploy pipelines.
 
 ---
 
-## Setup Instructions
+## 💻 1. Local Process Deployment (Open Ports - Bare Metal)
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL (4 databases, one per service)
+For fast prototyping and code modifications, you can run all services directly on your host machine:
 
-### 1. Backend Services
+### A. Run PostgreSQL Database
+Start a local PostgreSQL instance on port `5432` and create the required databases:
+```sql
+CREATE DATABASE cloudcart_users;
+CREATE DATABASE cloudcart_products;
+CREATE DATABASE cloudcart_orders;
+CREATE DATABASE cloudcart_inventory;
+```
 
-Each service lives in `services/<service-name>/`. For each service:
+### B. Run Backend Services (FastAPI + Uvicorn)
+Open separate terminal instances for each service folder under `services/`, configure their environment variables, and start:
 
 ```bash
-cd services/user-service
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+# 1. API Gateway (Port 8000)
+export USER_SERVICE_URL=http://localhost:8001
+export PRODUCT_SERVICE_URL=http://localhost:8002
+export ORDER_SERVICE_URL=http://localhost:8003
+export INVENTORY_SERVICE_URL=http://localhost:8004
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 2. User Service (Port 8001)
+export DATABASE_URL=postgresql://postgres:your_password@localhost:5432/cloudcart_users
+export SECRET_KEY=your_secret_key
+uvicorn app.main:app --host 0.0.0.0 --port 8001
+
+# 3. Product Service (Port 8002)
+export DATABASE_URL=postgresql://postgres:your_password@localhost:5432/cloudcart_products
+export INVENTORY_SERVICE_URL=http://localhost:8004
+uvicorn app.main:app --host 0.0.0.0 --port 8002
+
+# 4. Order Service (Port 8003)
+export DATABASE_URL=postgresql://postgres:your_password@localhost:5432/cloudcart_orders
+export PRODUCT_SERVICE_URL=http://localhost:8002
+export INVENTORY_SERVICE_URL=http://localhost:8004
+uvicorn app.main:app --host 0.0.0.0 --port 8003
+
+# 5. Inventory Service (Port 8004)
+export DATABASE_URL=postgresql://postgres:your_password@localhost:5432/cloudcart_inventory
+uvicorn app.main:app --host 0.0.0.0 --port 8004
 ```
 
-Repeat for `product-service` (port 8002), `order-service` (port 8003), `inventory-service` (port 8004), and `api-gateway` (port 8000).
-
-> Configure each service's `.env` file with the correct `DATABASE_URL` and inter-service URLs.
-
-### 2. Frontend
-
+### C. Run Next.js Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-The frontend runs at `http://localhost:3000` and communicates through the Gateway at `http://localhost:8000`.
-
----
-
-## Implemented Features
-
-- ✅ JWT-based authentication (register, login, session restoration, logout)
-- ✅ Protected dashboard routes with client-side route guards
-- ✅ Live microservice health monitoring dashboard
-- ✅ Product catalog browsing with search, category filters, and pagination
-- ✅ Product detail viewer with metadata JSON explorer
-- ✅ Warehouse inventory dashboard combining Product + Inventory Service data
-- ✅ Low stock warning indicators (≤ 5 units)
-- ✅ Customer order listing with color-coded status badges
-- ✅ Order detail viewer with visual lifecycle timeline
-- ✅ Order status transition controls (Advance / Cancel) with backend validation
-- ✅ Cloud architecture topology showcase page
-- ✅ Subtle page transition animations (Framer Motion)
-- ✅ Responsive layouts (desktop + mobile)
-- ✅ Skeleton loaders, error boundaries, and empty state illustrations
-
-## Future Roadmap
-
-- 🚧 API Gateway JWT enforcement middleware
-- 🚧 Kafka event-driven communication between services
-- 🚧 Kubernetes deployment manifests
-- 🚧 Prometheus / Grafana monitoring stack
-- 🚧 Docker Compose orchestration
-- 🚧 End-to-end integration tests
+Open `http://localhost:3000` to interact with the dashboard.
 
 ---
 
-## Project Structure
+## 🐳 2. Docker Compose Deployment
 
-```
-cloud-native-microservices-app/
-├── frontend/                    # Next.js 16 App Router client
-│   └── src/
-│       ├── app/
-│       │   ├── (dashboard)/     # Protected route group
-│       │   │   ├── dashboard/   # Health monitoring
-│       │   │   ├── products/    # Catalog + [id] detail
-│       │   │   ├── inventory/   # Stock levels table
-│       │   │   ├── orders/      # Orders + [id] lifecycle
-│       │   │   ├── architecture/# System topology
-│       │   │   └── profile/     # User profile + logout
-│       │   ├── login/           # Authentication
-│       │   └── register/        # User registration
-│       ├── components/layout/   # Sidebar, Navbar, PageContainer, AnimatedPage
-│       ├── hooks/               # useAuth (AuthProvider + context)
-│       ├── services/            # Axios API client + interceptors
-│       └── types/               # TypeScript interfaces
-├── services/
-│   ├── api-gateway/             # FastAPI reverse proxy
-│   ├── user-service/            # Auth + user management
-│   ├── product-service/         # Product catalog
-│   ├── order-service/           # Order lifecycle
-│   └── inventory-service/       # Stock tracking
-├── databases/                   # Database configurations
-├── kubernetes/                  # Future K8s manifests
-└── docs/                        # Documentation
-    └── demo-flow.md             # Demo walkthrough guide
+We use environment file interpolation to keep credentials out of the docker-compose manifest.
+
+1. **Create your local environment file**:
+   ```bash
+   cp .env.template .env
+   ```
+2. **Populate `.env`**: Open the newly created `.env` file and insert your passwords and keys (e.g. `POSTGRES_PASSWORD=your_secure_password`).
+3. **Instantiate the docker-compose file**:
+   ```bash
+   cp docker-compose.yml.template docker-compose.yml
+   ```
+4. **Deploy the application stack**:
+   ```bash
+   docker-compose up --build -d
+   ```
+5. **Access the application**: Open `http://localhost:3000` to load the application.
+
+---
+
+## 🚀 3. Kubernetes Deploy Steps (Minikube / Local)
+
+Follow this deployment path to instantiate the cluster from local builds:
+
+### A. Initialize Minikube & Load Ingress addon
+```bash
+minikube start
+minikube addons enable ingress
 ```
 
+### B. Import Images Locally
+Compile application layers and load them into the container runtime namespace:
+```bash
+# Build frontend and user-service locally
+docker build -t harveen421/cloudcart-frontend:v5 frontend
+docker build -t harveen421/cloudcart-user-service:v1 services/user-service
+
+# Load into Minikube cache
+minikube image load harveen421/cloudcart-frontend:v5
+minikube image load harveen421/cloudcart-user-service:v1
+minikube image load harveen421/cloudcart-product-service:v1
+minikube image load harveen421/cloudcart-order-service:v1
+minikube image load harveen421/cloudcart-inventory-service:v1
+minikube image load harveen421/cloudcart-api-gateway:v1
+minikube image load postgres:16
+```
+
+### C. Apply Resources
+```bash
+# 1. Namespaces and configs
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/configmaps/
+kubectl apply -f kubernetes/secrets/postgres-secret.yaml
+
+# 2. Database volumes & pods
+kubectl apply -f kubernetes/postgres/
+
+# 3. Create service databases (Connect to psql to bootstrap schemas)
+# Get the active postgres pod name first:
+kubectl get pods -n cloudcart -l app=postgres
+kubectl exec -i [POSTGRES_POD_NAME] -n cloudcart -- psql -U postgres -c "CREATE DATABASE cloudcart_users; CREATE DATABASE cloudcart_products; CREATE DATABASE cloudcart_orders; CREATE DATABASE cloudcart_inventory;"
+
+# 4. Apply deployments
+kubectl apply -f kubernetes/user-service/
+kubectl apply -f kubernetes/product-service/
+kubectl apply -f kubernetes/inventory-service/
+kubectl apply -f kubernetes/order-service/
+kubectl apply -f kubernetes/api-gateway/
+kubectl apply -f kubernetes/frontend/
+
+# 5. Apply Ingress
+kubectl apply -f kubernetes/ingress/
+```
+
+### D. Patch Ingress & Access
+By default, the Ingress controller is deployed as `NodePort`. Patch it to `LoadBalancer` to enable tunnel binding:
+```powershell
+Set-Content patch.json '{"spec": {"type": "LoadBalancer"}}'
+kubectl patch svc ingress-nginx-controller -n ingress-nginx --patch-file patch.json
+Remove-Item patch.json
+```
+Start the tunnel in a separate terminal:
+```bash
+minikube tunnel
+```
+Now browse to `http://localhost` (or configure your Windows hosts file to point `cloudcart.local` to `127.0.0.1` and open `http://cloudcart.local`).
+
 ---
 
-## License
+## 🔮 Future Roadmap & Improvements
 
-See [LICENSE](LICENSE) for details.
+* 🚀 **CI/CD Build Pipelines**: Automate code linting, unit testing, and Docker builds via GitHub Actions on every pull request.
+* ☁️ **Production Cloud Scaling**: Target GKE (Google Kubernetes Engine) or EKS (Amazon Elastic Kubernetes Service) using Helm charts.
+* 📈 **Observability & Log Aggregation**: Install Prometheus, Grafana, and Loki agents to monitor pod metrics and service error traces.
+* ⚖️ **Horizontal Pod Autoscaling**: Automatically scale replicas based on CPU threshold spikes using the Kubernetes Metrics Server.

@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: product-service
-        image: harveen421/cloudcart-product-service:v1
-        imagePullPolicy: IfNotPresent
+        image: cloud-native-microservices-app-product-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8002
         env:
@@ -32,16 +32,15 @@ spec:
             configMapKeyRef:
               name: cloudcart-config
               key: INVENTORY_SERVICE_URL
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: product-service
-  namespace: cloudcart
-spec:
-  selector:
-    app: product-service
-  ports:
-  - port: 8002
-    targetPort: 8002
-  type: ClusterIP
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8002
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10

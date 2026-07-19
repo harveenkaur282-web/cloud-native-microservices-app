@@ -261,7 +261,7 @@ export default function DashboardPage() {
                   <div className="space-y-0.5 font-sans">
                     <p className="text-xs font-extrabold text-[#2E2522]">{service.name}</p>
                     <p className="text-[10px] text-slate-400 font-mono">
-                      {service.key === 'gateway' ? 'http://localhost:8000' + service.endpoint : '/api/v1' + service.endpoint}
+                      {service.key === 'gateway' ? '/api/v1' + service.endpoint : '/api/v1' + service.endpoint}
                     </p>
                   </div>
 

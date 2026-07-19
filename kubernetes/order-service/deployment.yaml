@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: order-service
-        image: harveen421/cloudcart-order-service:v1
-        imagePullPolicy: IfNotPresent
+        image: cloud-native-microservices-app-order-service:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8003
         env:
@@ -37,16 +37,15 @@ spec:
             configMapKeyRef:
               name: cloudcart-config
               key: INVENTORY_SERVICE_URL
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service
-  namespace: cloudcart
-spec:
-  selector:
-    app: order-service
-  ports:
-  - port: 8003
-    targetPort: 8003
-  type: ClusterIP
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8003
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 10

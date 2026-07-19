@@ -30,44 +30,56 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_users
-      - SECRET_KEY=828c931f15d56b852f64fdc26c71596b277322eec827de93efb96d443e29d50e
-      - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=30
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - DATABASE_URL=${USER_DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+    depends_on:
+      - postgres
 
   product-service:
     image: cloud-native-microservices-app-product-service:latest
     ports:
       - "8002:8002"
     environment:
-      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_products
+      - DATABASE_URL=${PRODUCT_DATABASE_URL}
       - INVENTORY_SERVICE_URL=http://inventory-service:8004
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - inventory-service
+      - postgres
 
   order-service:
     image: cloud-native-microservices-app-order-service:latest
     ports:
       - "8003:8003"
     environment:
-      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_orders
+      - DATABASE_URL=${ORDER_DATABASE_URL}
       - PRODUCT_SERVICE_URL=http://product-service:8002
       - INVENTORY_SERVICE_URL=http://inventory-service:8004
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - product-service
       - inventory-service
+      - postgres
 
   inventory-service:
     image: cloud-native-microservices-app-inventory-service:latest
     ports:
       - "8004:8004"
     environment:
-      - DATABASE_URL=postgresql://postgres:hark%409015@host.docker.internal:5432/cloudcart_inventory
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - DATABASE_URL=${INVENTORY_DATABASE_URL}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    container_name: cloudcart-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

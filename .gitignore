@@ -14,4 +14,10 @@ user-venv/
 .vscode/
 
 # Kubernetes Secrets
-kubernetes/config/secret.yaml
+kubernetes/secrets/postgres-secret.yaml
+
+# Docker Compose Local File
+docker-compose.yml
+
+# Docker Image Archives
+*.tar

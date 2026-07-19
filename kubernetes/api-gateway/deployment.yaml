@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: harveen421/cloudcart-api-gateway:v1
-        imagePullPolicy: IfNotPresent
+        image: cloud-native-microservices-app-api-gateway:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
         env:
@@ -42,16 +42,15 @@ spec:
             configMapKeyRef:
               name: cloudcart-config
               key: INVENTORY_SERVICE_URL
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway
-  namespace: cloudcart
-spec:
-  selector:
-    app: api-gateway
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: LoadBalancer
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

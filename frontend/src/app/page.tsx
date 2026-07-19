@@ -27,12 +27,12 @@ export default function Home() {
           <Logo size={36} />
           <span className="font-extrabold uppercase text-sm tracking-widest text-[#2E2522]">CloudCart</span>
         </div>
-        <Link
+        <a
           href="/login"
           className="px-5 py-2.5 bg-[#FFB7B2] hover:bg-[#f3a49e] rounded-2xl text-xs font-bold text-white shadow-md active:scale-95 transition-all duration-200 uppercase tracking-wider"
         >
           Access Console
-        </Link>
+        </a>
       </header>
 
       {/* Hero section */}
@@ -78,26 +78,21 @@ export default function Home() {
         </div>
 
         {/* Action buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="flex flex-col sm:flex-row items-center gap-4 mt-2"
-        >
-          <Link
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+          <a
             href="/dashboard"
             className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#FFB7B2] hover:bg-[#f3a49e] text-xs font-bold text-white rounded-2xl shadow-lg shadow-pink-900/10 active:scale-95 transition-all duration-200 uppercase tracking-widest cursor-pointer"
           >
             Enter Dashboard
             <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
+          </a>
+          <a
             href="/products"
             className="inline-flex items-center gap-2 px-7 py-3.5 bg-white border border-[#FFE5D9] hover:bg-[#FFE5D9]/20 text-xs font-bold text-[#2E2522] rounded-2xl active:scale-95 transition-all duration-200 uppercase tracking-widest cursor-pointer"
           >
             Explore Catalog
-          </Link>
-        </motion.div>
+          </a>
+        </div>
       </main>
 
       {/* Footer bar */}

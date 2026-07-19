@@ -50,19 +50,16 @@ export default function LoginPage() {
     try {
       await login({ username, password });
       setMascotState('success');
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 600);
+      router.replace('/dashboard');
     } catch (err: any) {
-      console.error(err);
-      const detail = err.response?.data?.detail;
-      setError(detail || 'Credentials refused. Check username and password.');
-      setMascotState('error');
+    console.error(err);
+    const detail = err.response?.data?.detail;
+    setError(detail || 'Credentials refused. Check username and password.');
+    setMascotState('error');
     } finally {
-      setIsSubmitting(false);
+    setIsSubmitting(false);
     }
   };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FFFDF9] px-4 py-12 relative overflow-hidden select-none">
       {/* Floating Pastel Organic Shapes for Handcrafted Feel */}

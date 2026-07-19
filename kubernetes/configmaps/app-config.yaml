@@ -10,4 +10,4 @@ data:
   PRODUCT_SERVICE_URL: "http://product-service:8002"
   ORDER_SERVICE_URL: "http://order-service:8003"
   INVENTORY_SERVICE_URL: "http://inventory-service:8004"
-  NEXT_PUBLIC_API_GATEWAY_URL: "http://localhost:8000"
+  NEXT_PUBLIC_API_GATEWAY_URL: "/api/v1"
