@@ -1,4 +1,36 @@
-# CloudCart — Production-Grade Kubernetes Microservices Platform
+# CloudCart — Cloud-Native Microservices Platform
+
+A containerized e-commerce platform demonstrating **microservice architecture, API gateway routing, service-owned databases, and Kubernetes deployment**. CloudCart separates user, product, order, and inventory responsibilities into independent FastAPI services, with a Next.js dashboard.
+
+**Why it belongs in an AI/ML engineering portfolio:** production-oriented ML work also needs reliable APIs, containerization, service boundaries, configuration management, and deployment fundamentals. This project demonstrates those supporting engineering skills alongside my ML and RAG projects.
+
+## Architecture at a glance
+
+- **Frontend:** Next.js dashboard
+- **Gateway:** FastAPI API gateway routing requests to backend services
+- **Services:** User, product, order, and inventory services
+- **Data:** PostgreSQL with a database-per-service approach; JSONB for flexible product catalog fields
+- **Deployment:** Docker Compose and Kubernetes/Minikube manifests, with NGINX Ingress routing
+- **Configuration:** environment templates, ConfigMaps, and Kubernetes Secret templates
+
+The architecture is designed to keep service responsibilities separate and make each backend component independently deployable.
+
+## Repository highlights
+
+- `services/` — FastAPI gateway and domain microservices
+- `frontend/` — Next.js management interface
+- `kubernetes/` — service deployments, ingress, configuration, and database resources
+- `.env.template` and `docker-compose.yml.template` — starting points for local configuration and container orchestration
+
+## Run locally
+
+See the detailed instructions below for bare-metal, Docker Compose, and Minikube deployment paths. Start by copying the provided templates, filling in local development values, and never commit real credentials.
+
+> **Security note:** Kubernetes Secret values encoded with Base64 are not encrypted. Treat real secret manifests as sensitive, keep credentials out of Git, and use a secret manager or appropriately secured cluster secrets for real deployments.
+
+> **Project status:** This README documents the repository's architecture and deployment paths. Verify the full stack in a clean environment and add a CI/test summary, screenshots, and a reproducible demo before describing it as production-ready.
+
+---
 
 CloudCart is a modern, decoupled cloud-native e-commerce application structured into independently scaling microservices, a reverse-proxy API Gateway, and an interactive Next.js management dashboard.
 
